@@ -8,6 +8,7 @@ import com.example.barcodeMicroService.repository.BarcodeRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
@@ -27,21 +28,26 @@ public class BarcodeService {
     @Autowired
     private WebClient.Builder webClientBuilder;
 
+    @Autowired
+    private RestClient restClient;
+
     public List<BarcodeResponse> generateAndSaveBarcodes(int productId, int category, String unit) {
-        WebClient webClient = webClientBuilder.build();
-        String categoryServiceUrl = "http://localhost:8081/api/category/" + category;
-        webClient.get()
-                .uri(categoryServiceUrl)
-                .retrieve()
-                .bodyToMono(String.class)
-                .subscribe(categoryName -> {
-                    // Print the category name
-                    System.out.println("Category Name: " + categoryName);
-                }, error -> {
-                    // Handle any errors
-                    System.err.println("Error occurred: " + error.getMessage());
-                });
-        
+        // Use RestClient to call the Category Service
+        String categoryServiceUrl = "http://localhost:8081/api/category/{category}";
+
+        try {
+            String categoryName = restClient.get()
+                    .uri(categoryServiceUrl, category)
+                    .retrieve()
+                    .body(String.class);  // Retrieve the response as a String
+
+            // Print the category name
+            System.out.println("Category Name: " + categoryName);
+
+        } catch (Exception e) {
+            // Handle any errors
+            System.err.println("Error occurred: " + e.getMessage());
+        }
 
         List<BarcodeResponse> barcodeResponses = new ArrayList<>();
 
@@ -65,6 +71,7 @@ public class BarcodeService {
 
         return barcodeResponses;
     }
+
 
     private BarcodeResponse createAndSaveBarcode(int productId, BarcodeTypeEnum barcodeType) {
         BarcodeResponse barcodeResponse = new BarcodeResponse();
