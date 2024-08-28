@@ -13,57 +13,42 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class BarcodeService {
 
     private final AtomicInteger sequence = new AtomicInteger(100); // For generating the sequence part of the barcode
+
     @Autowired
     private BarcodeRepository barcodeRepository;
+
     @Autowired
     private ModelMapper mapper;
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
-
-    @Autowired
     private RestClient restClient;
 
-    public List<BarcodeResponse> generateAndSaveBarcodes(int productId, int category, String unit) {
-        // Use RestClient to call the Category Service
-        String categoryServiceUrl = "http://localhost:8081/api/category/{category}";
+    public List<BarcodeResponse> generateAndSaveBarcodes(int productId, int categoryId, String unit, String productCode) {
 
-        try {
-            String categoryName = restClient.get()
-                    .uri(categoryServiceUrl, category)
-                    .retrieve()
-                    .body(String.class);  // Retrieve the response as a String
+        System.out.println("Category: " + categoryId);
+        System.out.println("Unit: " + unit);
 
-            // Print the category name
-            System.out.println("Category Name: " + categoryName);
-
-        } catch (Exception e) {
-            // Handle any errors
-            System.err.println("Error occurred: " + e.getMessage());
-        }
 
         List<BarcodeResponse> barcodeResponses = new ArrayList<>();
 
-        String productCode = String.format("%05d", productId); // Assuming the product code is the productId formatted to 5 digits
 
-        if (category == 2 && "Kilogram".equalsIgnoreCase(unit)) {  // Meyve
+        if (categoryId == 2 && "KILOGRAM".equalsIgnoreCase(unit)) {  // Meyve
             barcodeResponses.add(createAndSaveBarcode(productId, BarcodeTypeEnum.URUN));
             barcodeResponses.add(createAndSaveBarcode(productId, BarcodeTypeEnum.KASA));
-        } else if (category == 5) {  // Balık
-            if ("Kilogram".equalsIgnoreCase(unit)) {
+        } else if (categoryId == 5) {  // Balık
+            if ("KILOGRAM".equalsIgnoreCase(unit)) {
                 barcodeResponses.add(createAndSaveBarcode(productId, BarcodeTypeEnum.URUN));
                 barcodeResponses.add(createAndSaveScaleBarcode(productId, productCode));
-            } else if ("Adet".equalsIgnoreCase(unit)) {
+            } else if ("UNIT".equalsIgnoreCase(unit)) {
                 barcodeResponses.add(createAndSaveBarcode(productId, BarcodeTypeEnum.KASA));
             }
-        } else if (category == 3) {  // Et
+        } else if (categoryId == 3) {  // Et
             barcodeResponses.add(createAndSaveScaleBarcode(productId, productCode));
         } else {
             barcodeResponses.add(createAndSaveBarcode(productId, BarcodeTypeEnum.URUN));
@@ -71,7 +56,6 @@ public class BarcodeService {
 
         return barcodeResponses;
     }
-
 
     private BarcodeResponse createAndSaveBarcode(int productId, BarcodeTypeEnum barcodeType) {
         BarcodeResponse barcodeResponse = new BarcodeResponse();
@@ -99,15 +83,23 @@ public class BarcodeService {
         barcodeResponse.setBarcodeType(BarcodeTypeEnum.TERAZI);
 
         int sequencePart = sequence.getAndIncrement() % 1000;
-        barcodeResponse.setBarcode(productCode + String.format("%03d", sequencePart));  // 8-character scale barcode
-
+        // Ensure that the first 5 characters are from productCode
+        System.out.println("Product Code: " + productCode);
+        barcodeResponse.setBarcode(productCode.substring(0, 5) + String.format("%03d", sequencePart));  // 8-character scale barcode
+        System.out.println("Scale Barcode: " + barcodeResponse.getBarcode());
         saveBarcodeToDatabase(productId, barcodeResponse);
         return barcodeResponse;
     }
 
+
     private void saveBarcodeToDatabase(int productId, BarcodeResponse barcodeResponse) {
         Barcode barcodeEntity = mapper.map(barcodeResponse, Barcode.class);
         barcodeEntity.setProductId(productId);
-        barcodeRepository.save(barcodeEntity);
+
+        // Save the entity and retrieve the saved entity with the generated ID
+        Barcode savedBarcode = barcodeRepository.save(barcodeEntity);
+
+        // Set the generated barcodeId in the response
+        barcodeResponse.setBarcodeId(savedBarcode.getBarcodeId());
     }
 }

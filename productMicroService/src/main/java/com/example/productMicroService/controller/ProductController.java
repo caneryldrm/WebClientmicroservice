@@ -46,4 +46,11 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.ok("Product deleted with ID: " + id);
     }
+
+    @PutMapping("/generateBarcode/{productId}")
+    public ResponseEntity<Product> createBarcodeForProduct(@PathVariable int productId) {
+        Product barcodedProduct = productService.createBarcodeForProduct(productId);
+        return ResponseEntity.ok(barcodedProduct);
+    }
+
 }

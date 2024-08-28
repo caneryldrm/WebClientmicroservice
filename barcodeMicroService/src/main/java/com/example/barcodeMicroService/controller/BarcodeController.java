@@ -20,7 +20,7 @@ public class BarcodeController {
     @PostMapping("/generate")
     public ResponseEntity<List<BarcodeResponse>> generateBarcodes(@RequestBody BarcodeRequest request) {
         List<BarcodeResponse> barcodeResponses = barcodeService.generateAndSaveBarcodes(
-                request.getProductId(), request.getCategory(), request.getUnit());
+                request.getProductId(), request.getCategoryId(), request.getUnit(), request.getProductCode());
         return ResponseEntity.status(HttpStatus.OK).body(barcodeResponses);
     }
 

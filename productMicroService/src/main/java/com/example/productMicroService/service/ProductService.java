@@ -1,9 +1,7 @@
 package com.example.productMicroService.service;
 
-import com.example.productMicroService.model.CreateProductRequest;
-import com.example.productMicroService.model.GetCategoryNameResponse;
-import com.example.productMicroService.model.Product;
-import com.example.productMicroService.model.GetProductByIdResponse;
+import com.example.productMicroService.UnitEnum;
+import com.example.productMicroService.model.*;
 import com.example.productMicroService.repository.ProductRepository;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.modelmapper.ModelMapper;
@@ -12,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,8 +22,7 @@ public class ProductService {
 
     @Autowired
     private ModelMapper mapper;
-    @Autowired
-    private WebClient.Builder webClientBuilder;
+
 
     @Autowired
     private RestClient restClient;
@@ -100,6 +99,46 @@ public class ProductService {
 
     public void deleteProduct(int productId) {
         productRepository.deleteById(productId);
+    }
+
+    public Product  createBarcodeForProduct (int productId) {
+        String barcodeServiceUrl = "http://localhost:8083/api/barcode/generate";
+        Optional<Product> productOptional = productRepository.findById(productId);
+        if (productOptional.isPresent()) {
+            Product product = productOptional.get();
+            int categoryId = product.getCategoryId();
+            System.out.println("Category ID: " + categoryId);
+            UnitEnum productUnit = product.getUnit();
+            String productCode = product.getProductCode();
+
+            BarcodeRequest barcodeRequest = new BarcodeRequest();
+            barcodeRequest.setProductId(productId);
+            barcodeRequest.setCategoryId(categoryId);
+            barcodeRequest.setUnit(productUnit);
+            barcodeRequest.setProductCode(productCode);
+
+            // Call the Barcode Service to generate and save barcodes
+            ArrayList barcodeResponseList = restClient.post()
+                    .uri(barcodeServiceUrl).body(barcodeRequest).retrieve().body(ArrayList.class);
+
+            System.out.println("Barcode Response: " + barcodeResponseList);
+            System.out .println("Barcode Response: " + barcodeResponseList.get(0));
+            if(barcodeResponseList.size() == 2) {
+                BarcodeResponse barcodeResponse = mapper.map(barcodeResponseList.get(0), BarcodeResponse.class);
+                BarcodeResponse barcodeResponse2 = mapper.map(barcodeResponseList.get(1), BarcodeResponse.class);
+                product.setBarcode1(barcodeResponse.getBarcode());
+                product.setBarcode2(barcodeResponse2.getBarcode());
+            } else if (barcodeResponseList.size() == 1) {
+                BarcodeResponse barcodeResponse = mapper.map(barcodeResponseList.get(0), BarcodeResponse.class);
+                product.setBarcode1(barcodeResponse.getBarcode());
+            }
+            else  {
+                throw new IllegalArgumentException("Barcode not found with ID: " + productId);
+            }//
+            return productRepository.save(product);
+        } else {
+            throw new IllegalArgumentException("Product not found with ID: " + productId);
+        }
     }
 
 

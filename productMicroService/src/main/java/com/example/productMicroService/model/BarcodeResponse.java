@@ -1,7 +1,5 @@
-package com.example.barcodeMicroService.model;
+package com.example.productMicroService.model;
 
-import com.example.barcodeMicroService.BarcodeTypeEnum;
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +8,7 @@ import lombok.Setter;
 public class BarcodeResponse {
     private int barcodeId;
     private String barcode;
-    private BarcodeTypeEnum barcodeType;
+    private String barcodeType;
     private int productId;
 
 }
