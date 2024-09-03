@@ -17,13 +17,13 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping("/{productId}")
-    private ResponseEntity<GetProductByIdResponse> getProductDetails(@PathVariable("productId") int productId) throws Exception {
+    public ResponseEntity<GetProductByIdResponse> getProductDetails(@PathVariable("productId") int productId) throws Exception {
         GetProductByIdResponse product = productService.getProductById(productId);
         return ResponseEntity.status(HttpStatus.OK).body(product);
     }
 
     @GetMapping("/{productId}/category")
-    private ResponseEntity<String> getProductCategoryName(@PathVariable("productId") int productId) throws Exception {
+    public ResponseEntity<String> getProductCategoryName(@PathVariable("productId") int productId) throws Exception {
         String categoryName = productService.getProductCategoryNameByProductId(productId);
         return ResponseEntity.status(HttpStatus.OK).body(categoryName);
     }
