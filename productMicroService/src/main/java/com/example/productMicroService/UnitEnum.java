@@ -1,5 +1,8 @@
 package com.example.productMicroService;
 
+import lombok.Getter;
+
+@Getter
 public enum UnitEnum {
     KILOGRAM("kilogram"),
     UNIT("unit");
@@ -10,7 +13,4 @@ public enum UnitEnum {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
 }

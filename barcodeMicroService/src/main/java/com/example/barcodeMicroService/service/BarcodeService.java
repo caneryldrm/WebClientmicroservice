@@ -2,14 +2,12 @@ package com.example.barcodeMicroService.service;
 
 import com.example.barcodeMicroService.BarcodeTypeEnum;
 import com.example.barcodeMicroService.model.Barcode;
-import com.example.barcodeMicroService.model.BarcodeRequest;
 import com.example.barcodeMicroService.model.BarcodeResponse;
 import com.example.barcodeMicroService.repository.BarcodeRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.reactive.function.client.WebClient;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +24,6 @@ public class BarcodeService {
     @Autowired
     private ModelMapper mapper;
 
-    @Autowired
-    private RestClient restClient;
 
     public List<BarcodeResponse> generateAndSaveBarcodes(int productId, int categoryId, String unit, String productCode) {
 
@@ -102,4 +98,5 @@ public class BarcodeService {
         // Set the generated barcodeId in the response
         barcodeResponse.setBarcodeId(savedBarcode.getBarcodeId());
     }
+
 }

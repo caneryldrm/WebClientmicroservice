@@ -1,5 +1,8 @@
 package com.example.productMicroService;
 
+import lombok.Getter;
+
+@Getter
 public enum BrandEnum {
     ULKER("Ülker"),
     ETI("Eti"),
@@ -15,7 +18,4 @@ public enum BrandEnum {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
 }

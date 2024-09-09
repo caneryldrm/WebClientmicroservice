@@ -50,12 +50,17 @@ public class ProductService {
             GetCategoryNameResponse getCategoryNameResponse = restClient.get()
                     .uri(categoryServiceUrl, categoryId)  // Pass categoryId as a path variable
                     .retrieve()
-                    .body(GetCategoryNameResponse.class);  // Retrieve the response as a String
+                    .body(GetCategoryNameResponse.class);
 
+            if (getCategoryNameResponse == null) {
+                throw new Exception("Category not found with ID: " + categoryId);
+            }
+            else {
+                return getCategoryNameResponse.getCategoryName();
+            }
 
             // Retrieve the category name using RestClient
-            assert getCategoryNameResponse != null;
-            return "Your product category is: " + getCategoryNameResponse.getCategoryName();
+
         } else {
             throw new Exception("Product not found with ID: " + productId);
         }
@@ -80,16 +85,20 @@ public class ProductService {
 
 
             // Retrieve the category name using RestClient
-            assert getCategoryNameResponse != null;
             // If the category is valid, proceed with saving the product
-            String firstTwo = getCategoryNameResponse.getCategoryName().substring(0, 2).toUpperCase();
-            String lastThree = RandomStringUtils.randomAlphabetic(3).toUpperCase();
-            String productCode = firstTwo + lastThree;
-            Product product = mapper.map(createProductRequest, Product.class);
-            product.setProductCode(productCode);
-            product.setBarcode1(null);
-            product.setBarcode2(null);
-            return productRepository.save(product);
+            if (getCategoryNameResponse == null) {
+                throw new IllegalArgumentException("Category not found with ID: " + createProductRequest.getCategoryId());
+            }
+            else {
+                String firstTwo = getCategoryNameResponse.getCategoryName().substring(0, 2).toUpperCase();
+                String lastThree = RandomStringUtils.randomAlphabetic(3).toUpperCase();
+                String productCode = firstTwo + lastThree;
+                Product product = mapper.map(createProductRequest, Product.class);
+                product.setProductCode(productCode);
+                product.setBarcode1(null);
+                product.setBarcode2(null);
+                return productRepository.save(product);
+            }
         } else {
             // Handle the case where the categoryId is invalid
             throw new IllegalArgumentException("Invalid category ID: " + createProductRequest.getCategoryId());
